@@ -1,0 +1,57 @@
+{
+  "pages" : [ {
+    "route" : "/game",
+    "name" : "Game Session",
+    "description" : "Primary gameplay interface integrating the board, session scoreboard, move history log, and optional blitz timer. Adapts to a single-column stack on mobile and a two-column grid on desktop.",
+    "components" : [ {
+      "name" : "GameSessionPage",
+      "type" : "page",
+      "description" : "Top-level orchestrator managing game state, routing to sub-components, and handling match lifecycle events.",
+      "states" : [ "loading", "ready", "playing", "match-ended" ],
+      "props" : [ ],
+      "ariaLabels" : [ "Game session page" ]
+    }, {
+      "name" : "SessionScoreboard",
+      "type" : "container",
+      "description" : "Displays cumulative wins, losses, and draws for the current session. Reads/writes to localStorage on match conclusion and page load.",
+      "states" : [ "loading", "empty", "error", "data" ],
+      "props" : [ "wins", "losses", "draws", "onReset" ],
+      "ariaLabels" : [ "Session scoreboard", "Reset session scores" ]
+    }, {
+      "name" : "MoveHistoryLog",
+      "type" : "container",
+      "description" : "Scrollable vertical list rendering chronological move entries. Automatically clears when a new match initializes.",
+      "states" : [ "loading", "empty", "error", "data" ],
+      "props" : [ "moves", "isCpuMode" ],
+      "ariaLabels" : [ "Move history log" ]
+    }, {
+      "name" : "MoveHistoryEntry",
+      "type" : "presentational",
+      "description" : "Individual row displaying move sequence number, player identifier, placed symbol, and grid coordinate (e.g., A1, B3).",
+      "states" : [ "default", "cpu-move", "player-move" ],
+      "props" : [ "index", "player", "symbol", "position" ],
+      "ariaLabels" : [ "Move history entry" ]
+    }, {
+      "name" : "BlitzTimer",
+      "type" : "presentational",
+      "description" : "Countdown display showing remaining seconds per turn. Triggers automatic turn forfeit when reaching zero. Hidden when blitz mode is disabled.",
+      "states" : [ "hidden", "active", "warning", "expired" ],
+      "props" : [ "secondsLeft", "isActive", "onExpire" ],
+      "ariaLabels" : [ "Blitz countdown timer", "Time remaining" ]
+    }, {
+      "name" : "GameControls",
+      "type" : "container",
+      "description" : "Action bar containing new match button, blitz mode toggle, and game mode selector. Updates UI state based on active match phase.",
+      "states" : [ "default", "blitz-enabled", "match-ended" ],
+      "props" : [ "onNewMatch", "onToggleBlitz", "isBlitzActive", "gameMode" ],
+      "ariaLabels" : [ "Game controls", "Start new match", "Toggle blitz mode" ]
+    } ],
+    "userFlows" : [ "Enable Blitz mode → Start match → Timer counts down → Player/CPU moves → Timer resets → Match concludes → Scoreboard updates via localStorage → Move history clears", "Play standard match → Review chronological move log → Match ends → Win/Loss/Draw counters increment → Refresh page → Scoreboard values persist from localStorage" ]
+  } ],
+  "componentLibrary" : "Tailwind CSS with custom components, following the project's tech stack",
+  "responsiveStrategy" : "Mobile-first design. Single-column vertical stack on <640px. At sm (640px), scoreboard and controls align horizontally. At lg (1024px), layout splits into two columns: game board and timer on left, scoreboard and move history on right.",
+  "accessibilityLevel" : "WCAG 2.1 AA — all interactive elements keyboard-navigable, all images/content have text alternatives, color contrast minimum 4.5:1",
+  "colorPalette" : "Primary: #2563EB (actions, links), Success: #16A34A (completion), Error: #DC2626 (deletion, validation), Warning: #F59E0B, Neutral: #F3F4F6 (background), #6B7280 (secondary text)",
+  "typography" : "Sans-serif system font stack. Headings: text-2xl to text-4xl, font-semibold. Body: text-sm to text-base, font-normal",
+  "designTokens" : [ "spacing: 4px base grid (p-1=4px through p-16=64px)", "radius: rounded-lg (8px) for cards/modals, rounded (4px) for buttons/inputs", "shadows: shadow-sm for cards, shadow-md for modals, shadow-lg for dropdowns" ]
+}

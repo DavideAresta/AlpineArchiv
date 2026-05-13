@@ -1,0 +1,153 @@
+{
+  "projectName" : "Tic-Tac-Toe Advanced Features",
+  "technologyStack" : {
+    "frontend" : "Vanilla JavaScript (ES6+), HTML5, CSS3",
+    "persistence" : "localStorage API",
+    "buildTool" : "Vite",
+    "testing" : "Vitest + jsdom",
+    "language" : "JavaScript"
+  },
+  "buildConfiguration" : "Vite 5 with Vanilla JS, Vitest for unit/integration testing, jsdom for DOM simulation, ESLint for linting. Package.json scripts: dev, build, test, lint.",
+  "databaseSchema" : "-- No server-side database required. All persistence is handled via localStorage. -- localStorage key schema (documented as SQL for structural reference): -- CREATE TABLE session_scoreboard (id INTEGER PRIMARY KEY DEFAULT 1, player1_wins INTEGER NOT NULL DEFAULT 0, player1_losses INTEGER NOT NULL DEFAULT 0, draws INTEGER NOT NULL DEFAULT 0, game_mode VARCHAR(20) NOT NULL DEFAULT 'pvp', last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP); -- localStorage key: 'ttt_scoreboard' stores JSON: {player1Wins: number, player1Losses: number, draws: number, gameMode: string, lastUpdated: string} -- localStorage key: 'ttt_move_history' stores JSON array: [{moveNumber: number, player: string, symbol: string, cellIndex: number, timestamp: string}] -- localStorage key: 'ttt_blitz_config' stores JSON: {enabled: boolean, durationSeconds: number}",
+  "projectStructure" : "tic-tac-toe/\n├── index.html\n├── package.json\n├── vite.config.js\n├── .eslintrc.js\n├── src/\n│   ├── main.js\n│   ├── app.js\n│   ├── styles/\n│   │   ├── main.css\n│   │   ├── scoreboard.css\n│   │   ├── move-history.css\n│   │   └── blitz-timer.css\n│   ├── components/\n│   │   ├── Board.js\n│   │   ├── Scoreboard.js\n│   │   ├── MoveHistory.js\n│   │   └── BlitzTimer.js\n│   ├── services/\n│   │   ├── GameEngine.js\n│   │   ├── ScoreboardService.js\n│   │   ├── MoveHistoryService.js\n│   │   ├── BlitzTimerService.js\n│   │   ├── CpuPlayerService.js\n│   │   └── StorageService.js\n│   ├── models/\n│   │   ├── ScoreboardModel.js\n│   │   ├── MoveModel.js\n│   │   └── BlitzConfigModel.js\n│   ├── events/\n│   │   └── EventBus.js\n│   └── utils/\n│       ├── constants.js\n│       └── helpers.js\n└── tests/\n    ├── ScoreboardService.test.js\n    ├── MoveHistoryService.test.js\n    ├── BlitzTimerService.test.js\n    ├── GameEngine.test.js\n    ├── StorageService.test.js\n    └── CpuPlayerService.test.js",
+  "components" : [ {
+    "name" : "App",
+    "description" : "Root application orchestrator. Initialises all services and components, wires event listeners, and coordinates game mode selection (PvP vs CPU) and Blitz mode toggling. Entry point for the entire application lifecycle.",
+    "type" : "config",
+    "dependencies" : [ "EventBus", "GameEngine", "Board", "Scoreboard", "MoveHistory", "BlitzTimer", "ScoreboardService", "MoveHistoryService", "BlitzTimerService", "CpuPlayerService" ]
+  }, {
+    "name" : "EventBus",
+    "description" : "Centralised publish/subscribe event bus enabling decoupled communication between components and services. Emits events such as MOVE_MADE, MATCH_CONCLUDED, TURN_FORFEITED, TIMER_TICK, BOARD_RESET, and GAME_MODE_CHANGED.",
+    "type" : "service",
+    "dependencies" : [ ]
+  }, {
+    "name" : "GameEngine",
+    "description" : "Core game logic controller. Manages turn order, validates moves, detects win/draw conditions across all nine cells, triggers match conclusion events, and delegates CPU turns to CpuPlayerService. Supports both PvP and Vs CPU modes.",
+    "type" : "service",
+    "dependencies" : [ "EventBus", "CpuPlayerService", "MoveHistoryService", "BlitzTimerService" ]
+  }, {
+    "name" : "Board",
+    "description" : "DOM component rendering the 3x3 game grid. Handles cell click events, visually marks placed symbols, highlights winning cells, and resets the visual board state when a new match begins.",
+    "type" : "controller",
+    "dependencies" : [ "EventBus", "GameEngine" ]
+  }, {
+    "name" : "ScoreboardService",
+    "description" : "Business logic for scoreboard state management. Increments win, loss, and draw counters based on match outcome events. Persists state to localStorage after every update and rehydrates state on page load. Supports both PvP and Vs CPU game modes.",
+    "type" : "service",
+    "dependencies" : [ "StorageService", "EventBus", "ScoreboardModel" ]
+  }, {
+    "name" : "Scoreboard",
+    "description" : "DOM component that renders the session scoreboard UI. Subscribes to scoreboard update events and re-renders counters for wins, losses, and draws without requiring a page refresh. Reads initial values from ScoreboardService on mount.",
+    "type" : "controller",
+    "dependencies" : [ "EventBus", "ScoreboardService" ]
+  }, {
+    "name" : "MoveHistoryService",
+    "description" : "Manages the ordered list of moves for the current match. Appends a new MoveModel entry each time any player (human or CPU) places a symbol. Clears the history list when a board reset event is received. Does not persist history across page refreshes.",
+    "type" : "service",
+    "dependencies" : [ "EventBus", "MoveModel" ]
+  }, {
+    "name" : "MoveHistory",
+    "description" : "DOM component rendering the sequential move history log. Appends a new list item for each MOVE_MADE event showing player identifier, symbol (X or O), and cell position. Clears all entries on BOARD_RESET event.",
+    "type" : "controller",
+    "dependencies" : [ "EventBus", "MoveHistoryService" ]
+  }, {
+    "name" : "BlitzTimerService",
+    "description" : "Manages the per-move countdown timer for Blitz mode. Starts, resets, and cancels an interval-based countdown when turns change. Emits TIMER_TICK events each second and a TURN_FORFEITED event when the countdown reaches zero. Applies identical forfeit logic for both human and CPU turns.",
+    "type" : "service",
+    "dependencies" : [ "EventBus", "BlitzConfigModel" ]
+  }, {
+    "name" : "BlitzTimer",
+    "description" : "DOM component displaying the visible countdown timer UI. Renders the remaining seconds in real time by subscribing to TIMER_TICK events. Hides itself entirely when Blitz mode is not enabled, satisfying the requirement that no timer appears in standard mode.",
+    "type" : "controller",
+    "dependencies" : [ "EventBus", "BlitzTimerService" ]
+  }, {
+    "name" : "CpuPlayerService",
+    "description" : "Encapsulates CPU move selection logic. Selects a valid cell using a configurable strategy (random or minimax). Invoked by GameEngine on CPU turns. Also subject to BlitzTimerService forfeit logic when Blitz mode is active.",
+    "type" : "service",
+    "dependencies" : [ "EventBus" ]
+  }, {
+    "name" : "StorageService",
+    "description" : "Thin abstraction over the browser localStorage API. Provides typed get, set, and remove methods with JSON serialisation and deserialisation. Used exclusively by ScoreboardService to persist and rehydrate scoreboard state.",
+    "type" : "service",
+    "dependencies" : [ ]
+  }, {
+    "name" : "ScoreboardModel",
+    "description" : "Plain data model representing scoreboard state: player1Wins, player1Losses, draws, gameMode, lastUpdated. Provides a factory method for creating a default zero-state instance and a validation method.",
+    "type" : "model",
+    "dependencies" : [ ]
+  }, {
+    "name" : "MoveModel",
+    "description" : "Plain data model representing a single move entry: moveNumber, player (string identifier), symbol (X or O), cellIndex (0-8), and timestamp. Used by MoveHistoryService to build the ordered log.",
+    "type" : "model",
+    "dependencies" : [ ]
+  }, {
+    "name" : "BlitzConfigModel",
+    "description" : "Plain data model representing Blitz mode configuration: enabled (boolean) and durationSeconds (number, default 10). Consumed by BlitzTimerService to determine timer behaviour.",
+    "type" : "model",
+    "dependencies" : [ ]
+  } ],
+  "apiEndpoints" : [ {
+    "method" : "GET",
+    "path" : "localStorage:ttt_scoreboard",
+    "description" : "Retrieves persisted scoreboard state (wins, losses, draws) from localStorage on page load. Fulfils the acceptance criterion: given scoreboard values are non-zero when the page is refreshed then all three counters display the same values as before the refresh.",
+    "requestBody" : null,
+    "responseBody" : "{\"player1Wins\": 3, \"player1Losses\": 1, \"draws\": 2, \"gameMode\": \"pvp\", \"lastUpdated\": \"2024-01-15T10:30:00Z\"}",
+    "auth" : "None - client-side localStorage, same-origin access only"
+  }, {
+    "method" : "POST",
+    "path" : "localStorage:ttt_scoreboard",
+    "description" : "Persists updated scoreboard state to localStorage after every match conclusion (win, loss, or draw). Triggered by ScoreboardService on MATCH_CONCLUDED event. Fulfils automatic update requirement without manual page refresh.",
+    "requestBody" : "{\"player1Wins\": 4, \"player1Losses\": 1, \"draws\": 2, \"gameMode\": \"cpu\", \"lastUpdated\": \"2024-01-15T10:35:00Z\"}",
+    "responseBody" : null,
+    "auth" : "None - client-side localStorage, same-origin access only"
+  }, {
+    "method" : "DELETE",
+    "path" : "localStorage:ttt_scoreboard",
+    "description" : "Removes the scoreboard entry from localStorage when the player explicitly resets the session scoreboard via a reset control. Resets all counters to zero.",
+    "requestBody" : null,
+    "responseBody" : null,
+    "auth" : "None - client-side localStorage, same-origin access only"
+  }, {
+    "method" : "POST",
+    "path" : "eventbus:MOVE_MADE",
+    "description" : "Internal event emitted by GameEngine each time any player (human or CPU) successfully places a symbol on the board. Payload includes player, symbol, cellIndex, and moveNumber. Consumed by MoveHistoryService to append a log entry and by BlitzTimerService to reset the countdown timer.",
+    "requestBody" : "{\"moveNumber\": 3, \"player\": \"Player 1\", \"symbol\": \"X\", \"cellIndex\": 4, \"timestamp\": \"2024-01-15T10:31:05Z\"}",
+    "responseBody" : null,
+    "auth" : "None - internal event bus"
+  }, {
+    "method" : "POST",
+    "path" : "eventbus:MATCH_CONCLUDED",
+    "description" : "Internal event emitted by GameEngine when a win or draw is detected. Payload includes outcome (win/draw), winner (player identifier or null), and gameMode. Consumed by ScoreboardService to update counters and by BlitzTimerService to cancel the active timer.",
+    "requestBody" : "{\"outcome\": \"win\", \"winner\": \"Player 1\", \"gameMode\": \"pvp\"}",
+    "responseBody" : null,
+    "auth" : "None - internal event bus"
+  }, {
+    "method" : "POST",
+    "path" : "eventbus:BOARD_RESET",
+    "description" : "Internal event emitted when a new match begins after board reset. Consumed by MoveHistoryService to clear the move log, by Board to reset cell visuals, and by BlitzTimerService to cancel any running timer. Fulfils the acceptance criterion that the move history log is cleared on board reset.",
+    "requestBody" : "{\"gameMode\": \"pvp\", \"blitzEnabled\": false}",
+    "responseBody" : null,
+    "auth" : "None - internal event bus"
+  }, {
+    "method" : "POST",
+    "path" : "eventbus:TURN_FORFEITED",
+    "description" : "Internal event emitted by BlitzTimerService when the countdown reaches zero and the active player has not moved. Consumed by GameEngine to pass the turn to the opponent. Applies to both human and CPU turns in Blitz mode as required by acceptance criteria.",
+    "requestBody" : "{\"forfeitedPlayer\": \"Player 2\", \"gameMode\": \"cpu\"}",
+    "responseBody" : null,
+    "auth" : "None - internal event bus"
+  }, {
+    "method" : "POST",
+    "path" : "eventbus:TIMER_TICK",
+    "description" : "Internal event emitted by BlitzTimerService once per second while Blitz mode is active and a turn is in progress. Payload contains remaining seconds. Consumed by BlitzTimer DOM component to update the visible countdown display in real time.",
+    "requestBody" : "{\"remainingSeconds\": 7}",
+    "responseBody" : null,
+    "auth" : "None - internal event bus"
+  }, {
+    "method" : "POST",
+    "path" : "eventbus:GAME_MODE_CHANGED",
+    "description" : "Internal event emitted when the player switches between Local PvP and Vs CPU modes or toggles Blitz mode on/off. Consumed by GameEngine, BlitzTimerService, and ScoreboardService to reconfigure behaviour accordingly.",
+    "requestBody" : "{\"gameMode\": \"cpu\", \"blitzEnabled\": true, \"blitzDurationSeconds\": 10}",
+    "responseBody" : null,
+    "auth" : "None - internal event bus"
+  } ]
+}
