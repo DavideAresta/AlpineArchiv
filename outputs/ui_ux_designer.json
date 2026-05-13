@@ -1,0 +1,91 @@
+{
+  "pages" : [ {
+    "route" : "/setup",
+    "name" : "Game Mode Selection",
+    "description" : "Initial screen allowing players to choose between Local PvP and Unbeatable CPU modes before starting a match",
+    "components" : [ {
+      "name" : "SetupPage",
+      "type" : "page",
+      "description" : "Top-level container for mode selection, handles initial state and navigation to game board. Supports keyboard navigation via arrow keys and Enter/Space.",
+      "states" : [ "loading", "ready", "error" ],
+      "props" : [ ],
+      "ariaLabels" : [ "Game setup screen" ]
+    }, {
+      "name" : "ModeSelector",
+      "type" : "container",
+      "description" : "Radio-group style selector for game modes. Highlights active selection and disables invalid states during navigation.",
+      "states" : [ "default", "pvp-selected", "cpu-selected", "hover", "focus" ],
+      "props" : [ "onSelect", "selectedMode" ],
+      "ariaLabels" : [ "Select game mode", "Local Player vs Player option", "Unbeatable CPU option" ]
+    }, {
+      "name" : "StartButton",
+      "type" : "presentational",
+      "description" : "Primary action button to initialize the game session with the chosen mode. Disabled until a mode is selected.",
+      "states" : [ "default", "disabled", "hover", "focus" ],
+      "props" : [ "onClick", "disabled" ],
+      "ariaLabels" : [ "Start game" ]
+    } ],
+    "userFlows" : [ "Select Local PvP or CPU mode → Click Start Game → Redirect to /play with selected mode" ]
+  }, {
+    "route" : "/play",
+    "name" : "Active Game Board",
+    "description" : "Main gameplay interface featuring the 3x3 grid, turn indicator, scoreboard, and reset controls. Enforces strict turn alternation and prevents overwriting.",
+    "components" : [ {
+      "name" : "GamePage",
+      "type" : "page",
+      "description" : "Orchestrates game state, win/draw detection, and CPU move timing. Manages session persistence across resets.",
+      "states" : [ "loading", "data", "error", "completed" ],
+      "props" : [ "gameMode" ],
+      "ariaLabels" : [ "Active game board" ]
+    }, {
+      "name" : "Scoreboard",
+      "type" : "presentational",
+      "description" : "Displays persistent session scores for Player X, Player O, and draws. Updates instantly on match conclusion.",
+      "states" : [ "default", "x-leading", "o-leading", "tied" ],
+      "props" : [ "xScore", "oScore", "draws" ],
+      "ariaLabels" : [ "Player scores" ]
+    }, {
+      "name" : "TurnIndicator",
+      "type" : "presentational",
+      "description" : "Visual and textual indicator showing whose turn it is. Shows animated 'CPU thinking' state during Minimax evaluation.",
+      "states" : [ "x-turn", "o-turn", "cpu-thinking" ],
+      "props" : [ "currentPlayer", "gameMode" ],
+      "ariaLabels" : [ "Current turn indicator" ]
+    }, {
+      "name" : "GameGrid",
+      "type" : "container",
+      "description" : "3x3 grid layout rendering nine interactive cells. Handles click delegation, enforces empty-cell validation, and applies winning line highlights.",
+      "states" : [ "loading", "empty", "data", "error" ],
+      "props" : [ "boardState", "onCellClick", "isGameOver" ],
+      "ariaLabels" : [ "Tic-Tac-Toe 3x3 grid" ]
+    }, {
+      "name" : "GridCell",
+      "type" : "presentational",
+      "description" : "Individual board cell. Displays X/O symbols, handles click events, and prevents interaction when occupied or game is over.",
+      "states" : [ "default", "occupied-x", "occupied-o", "winning", "disabled", "hover", "focus" ],
+      "props" : [ "index", "value", "isWinningCell", "onClick", "disabled" ],
+      "ariaLabels" : [ "Cell 1 through 9", "Place X or O", "Marked cell" ]
+    }, {
+      "name" : "ResetButton",
+      "type" : "presentational",
+      "description" : "Clears board state and resets turn order to X without page refresh or score modification. Accessible via Tab and activated with Enter/Space.",
+      "states" : [ "default", "hover", "focus", "disabled" ],
+      "props" : [ "onClick" ],
+      "ariaLabels" : [ "Reset match" ]
+    }, {
+      "name" : "ResultOverlay",
+      "type" : "container",
+      "description" : "Modal overlay that appears on win or draw. Displays result message, highlights winning combination, and provides rematch/reset action.",
+      "states" : [ "hidden", "visible-win", "visible-draw" ],
+      "props" : [ "winner", "isDraw", "onReset" ],
+      "ariaLabels" : [ "Match result overlay", "Winner announcement", "Draw announcement" ]
+    } ],
+    "userFlows" : [ "Click empty cell → Symbol placed → Turn alternates → Win/Draw detected → Result overlay appears → Click Reset → Board clears, scores persist, X starts", "CPU mode active → Player moves → CPU evaluates within 500ms → CPU places optimal move → Turn returns to player" ]
+  } ],
+  "componentLibrary" : "Tailwind CSS with custom components, following the project's tech stack",
+  "responsiveStrategy" : "Mobile-first design. Breakpoints: sm (640px) for tablets, lg (1024px) for desktop. Grid scales from 100vw on mobile to fixed 400px container on desktop. Mode selector stacks vertically on mobile, aligns horizontally on sm+.",
+  "accessibilityLevel" : "WCAG 2.1 AA — all interactive elements keyboard-navigable, all images/content have text alternatives, color contrast minimum 4.5:1",
+  "colorPalette" : "Primary: #2563EB (actions, links), Success: #16A34A (completion), Error: #DC2626 (deletion, validation), Warning: #F59E0B, Neutral: #F3F4F6 (background), #6B7280 (secondary text)",
+  "typography" : "Sans-serif system font stack. Headings: text-2xl to text-4xl, font-semibold. Body: text-sm to text-base, font-normal",
+  "designTokens" : [ "spacing: 4px base grid (p-1=4px through p-16=64px)", "radius: rounded-lg (8px) for cards/modals, rounded (4px) for buttons/inputs", "shadows: shadow-sm for cards, shadow-md for modals, shadow-lg for dropdowns" ]
+}
