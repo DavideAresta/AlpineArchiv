@@ -1,0 +1,6 @@
+{
+  "path" : "package.json",
+  "fileType" : "json",
+  "purpose" : "Build configuration with Vite 5, Vitest, jsdom, and ESLint dependencies and scripts",
+  "content" : "{\n  \"name\": \"tic-tac-toe-advanced\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Tic-Tac-Toe with advanced features: scoreboard, move history, blitz timer, CPU player\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"build\": \"vite build\",\n    \"preview\": \"vite preview\",\n    \"test\": \"vitest run\",\n    \"test:watch\": \"vitest\",\n    \"test:coverage\": \"vitest run --coverage\",\n    \"lint\": \"eslint src --ext .js\"\n  },\n  \"devDependencies\": {\n    \"vite\": \"^5.0.0\",\n    \"vitest\": \"^1.0.0\",\n    \"jsdom\": \"^23.0.0\",\n    \"@vitest/coverage-v8\": \"^1.0.0\",\n    \"eslint\": \"^8.50.0\"\n  }\n}\n"
+}
