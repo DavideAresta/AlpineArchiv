@@ -1,0 +1,79 @@
+{
+  "projectStructure" : "tictactoe/\n├── public/\n│   └── index.html\n├── src/\n│   ├── components/\n│   │   ├── Board.jsx\n│   │   ├── Cell.jsx\n│   │   ├── GameStatus.jsx\n│   │   ├── ModeSelector.jsx\n│   │   ├── ResetButton.jsx\n│   │   └── Scoreboard.jsx\n│   ├── engine/\n│   │   ├── winDetection.js\n│   │   └── minimax.js\n│   ├── hooks/\n│   │   └── useGameState.js\n│   ├── store/\n│   │   ├── gameSlice.js\n│   │   └── store.js\n│   ├── constants/\n│   │   └── gameConstants.js\n│   ├── App.jsx\n│   └── main.jsx\n├── tests/\n│   ├── engine/\n│   │   ├── winDetection.test.js\n│   │   └── minimax.test.js\n│   ├── components/\n│   │   ├── Board.test.jsx\n│   │   ├── Cell.test.jsx\n│   │   ├── ModeSelector.test.jsx\n│   │   └── ResetButton.test.jsx\n│   └── hooks/\n│       └── useGameState.test.js\n├── package.json\n├── vite.config.js\n└── vitest.config.js",
+  "buildConfiguration" : "Vite 5 + React 18, JavaScript (ES2022), Redux Toolkit 2, Vitest + React Testing Library for unit and component tests, ESLint + Prettier for code quality. No backend required — fully client-side SPA. Package.json scripts: dev, build, test, coverage.",
+  "databaseSchema" : "-- No persistent database required for this client-side application. -- All game state is managed in Redux store (in-memory). -- Session scoreboard is stored in Redux state and optionally persisted to localStorage. -- Schema below represents the logical in-memory state shape as reference SQL for documentation purposes only. CREATE TABLE game_session (id VARCHAR(36) PRIMARY KEY, mode VARCHAR(10) NOT NULL CHECK (mode IN ('PVP', 'CPU')), current_turn VARCHAR(1) NOT NULL DEFAULT 'X' CHECK (current_turn IN ('X', 'O')), status VARCHAR(10) NOT NULL DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS', 'WIN', 'DRAW')), winner VARCHAR(1) CHECK (winner IN ('X', 'O')), created_at TIMESTAMP DEFAULT NOW()); CREATE TABLE board_state (id BIGSERIAL PRIMARY KEY, session_id VARCHAR(36) REFERENCES game_session(id), cell_index INT NOT NULL CHECK (cell_index BETWEEN 0 AND 8), symbol VARCHAR(1) NOT NULL CHECK (symbol IN ('X', 'O')), placed_at TIMESTAMP DEFAULT NOW()); CREATE TABLE scoreboard (id BIGSERIAL PRIMARY KEY, session_id VARCHAR(36) REFERENCES game_session(id), x_wins INT NOT NULL DEFAULT 0, o_wins INT NOT NULL DEFAULT 0, draws INT NOT NULL DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW());",
+  "components" : [ {
+    "name" : "App",
+    "description" : "Root component that composes ModeSelector, Board, GameStatus, Scoreboard, and ResetButton. Reads top-level game mode and status from Redux store to conditionally render mode selection screen vs active game board.",
+    "type" : "controller",
+    "dependencies" : [ "ModeSelector", "Board", "GameStatus", "Scoreboard", "ResetButton", "useGameState" ]
+  }, {
+    "name" : "Board",
+    "description" : "Renders the 3x3 grid of nine Cell components. Reads board array from Redux store and dispatches cell click actions. Responsible for layout and delegating click events to the game state hook.",
+    "type" : "controller",
+    "dependencies" : [ "Cell", "useGameState", "gameSlice" ]
+  }, {
+    "name" : "Cell",
+    "description" : "Renders a single cell in the 3x3 grid. Displays X, O, or empty state. Accepts onClick handler and symbol prop. Applies visual styles for occupied vs empty states and prevents interaction when cell is already filled.",
+    "type" : "controller",
+    "dependencies" : [ ]
+  }, {
+    "name" : "GameStatus",
+    "description" : "Displays the current game state to players: active turn indicator showing whose turn it is (X or O), win announcement with winner identity, or draw declaration. Reads status and currentTurn from Redux store.",
+    "type" : "controller",
+    "dependencies" : [ "gameSlice" ]
+  }, {
+    "name" : "ModeSelector",
+    "description" : "Renders the game start screen allowing players to choose between Local PvP and Vs CPU modes. Dispatches setMode action to Redux store. Only shown before a game session begins or after mode reset.",
+    "type" : "controller",
+    "dependencies" : [ "gameSlice" ]
+  }, {
+    "name" : "ResetButton",
+    "description" : "Renders the Reset button visible during and after a match. Dispatches resetBoard action which clears board cells and restores turn to X without modifying scoreboard counters and without triggering page reload.",
+    "type" : "controller",
+    "dependencies" : [ "gameSlice" ]
+  }, {
+    "name" : "Scoreboard",
+    "description" : "Displays persistent session-level win/draw counters for X wins, O wins, and draws. Reads scoreboard slice from Redux store. Counters survive board resets within the same session.",
+    "type" : "controller",
+    "dependencies" : [ "gameSlice" ]
+  }, {
+    "name" : "useGameState",
+    "description" : "Custom React hook encapsulating all game interaction logic. Handles cell click events, enforces turn alternation, prevents overwriting occupied cells, triggers win/draw detection after each move, invokes CPU move scheduling in CPU mode, and dispatches appropriate Redux actions.",
+    "type" : "service",
+    "dependencies" : [ "gameSlice", "winDetection", "minimax" ]
+  }, {
+    "name" : "winDetection",
+    "description" : "Pure function module with zero UI dependencies. Accepts a 9-element board array and returns WIN with winner symbol, DRAW, or IN_PROGRESS. Evaluates all 8 winning lines (3 rows, 3 columns, 2 diagonals). Designed for isolated unit testing with deterministic output and minimum 80% coverage.",
+    "type" : "service",
+    "dependencies" : [ "gameConstants" ]
+  }, {
+    "name" : "minimax",
+    "description" : "Pure function module implementing the Minimax algorithm for unbeatable CPU play. Recursively evaluates all possible board states, scores terminal states, and returns the optimal cell index for the CPU player. Guarantees CPU never loses. Executes within 500ms for any valid 3x3 board state.",
+    "type" : "service",
+    "dependencies" : [ "winDetection", "gameConstants" ]
+  }, {
+    "name" : "gameSlice",
+    "description" : "Redux Toolkit slice managing all game state: board array (9 cells), currentTurn, gameStatus, winner, selectedMode, and scoreboard counters. Exposes actions: setMode, placeSymbol, resetBoard, updateScoreboard. Reducers enforce immutability via Immer.",
+    "type" : "model",
+    "dependencies" : [ "gameConstants" ]
+  }, {
+    "name" : "store",
+    "description" : "Redux store configuration using Redux Toolkit configureStore. Combines gameSlice reducer. Optionally wires redux-persist or localStorage middleware for scoreboard persistence across page refreshes.",
+    "type" : "config",
+    "dependencies" : [ "gameSlice" ]
+  }, {
+    "name" : "gameConstants",
+    "description" : "Shared constants module defining WINNING_LINES (all 8 win combinations as index arrays), SYMBOLS (X, O), GAME_MODES (PVP, CPU), and GAME_STATUS values (IN_PROGRESS, WIN, DRAW). Single source of truth consumed by engine and store.",
+    "type" : "model",
+    "dependencies" : [ ]
+  } ],
+  "apiEndpoints" : [ {
+    "method" : "GET",
+    "path" : "/",
+    "description" : "Serves the single-page application shell (index.html). All game logic executes client-side. No REST API endpoints are required as this is a fully client-side application with Redux state management.",
+    "requestBody" : null,
+    "responseBody" : "text/html SPA entry point",
+    "auth" : "None"
+  } ]
+}
